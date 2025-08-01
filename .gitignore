@@ -1,0 +1,19 @@
+# Compiled object files
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+
+# Compiled dynamic libraries
+*.so
+*.dll
+*.dylib
+
+# Executables
+snake
+*.exe
+
+# Build directories
+build/
+
