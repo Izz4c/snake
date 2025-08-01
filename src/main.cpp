@@ -8,14 +8,19 @@ const int CELL_SIZE = 20; // Size of each grid cell
 
 int cols = WIDTH / CELL_SIZE;  // Number of columns in the grid
 int rows = HEIGHT / CELL_SIZE; // Number of rows in the grid
-int tick = 0;
 struct Vec2{
     int x,y; // coordinates of vector
+    bool operator==(const Vec2& other) const {
+        return x == other.x && y == other.y;
+    }
 };
 
 std::vector<Vec2> snake = { {cols / 2, rows / 2}}; // Snake will initially be at the center of grid
-int dirX = 1, dirY = 0; // Directions, initially moving to the right (+1 = right, -1 = left)
+Vec2 fruit;
 
+int dirX = 1, dirY = 0; // Directions, initially moving to the right (+1 = right, -1 = left)
+double lastTime = 0.0;
+double delay = 0.08;
 void drawCell(int x, int y,float r, float g, float b){
     glColor3f(r,g,b);                             // Set drawing color
     glBegin(GL_QUADS);                            // Start drawing
@@ -32,10 +37,23 @@ void drawWhite(){
     glVertex2f(0,0);glVertex2f(0,WIDTH);glVertex2f(HEIGHT,0);glVertex2f(HEIGHT,WIDTH);
     glEnd();
 }
+// Spawn the fruit at a random position that is not on the snake
+void spawnFruit() {
+    while (true) {
+        fruit.x = rand() % cols;
+        fruit.y = rand() % rows;
 
+        bool onSnake = false;
+        for (const auto& segment : snake) {
+            if (segment == fruit) {
+                onSnake = true;
+                break;
+            }
+        }
+        if (!onSnake) break;
+    }
+}
 void update(){
-    tick++;
-    if (tick%6!=0) return;
     // Move the snake's body cells (tail->head)
     for(int i = snake.size()-1;i>0;--i){
         snake[i] = snake[i-1]; //Each segment takes position of segment before
@@ -46,16 +64,22 @@ void update(){
     
     // Wrap the snake around the screen if it goes out of bounds
     if(snake[0].x >= cols) snake[0].x =0;    // Wrap right edge -> left edge
-    if(snake[0].x < 0) snake[0].x =cols-1;  // Wrap left edge -> right edge
+    if(snake[0].x < 0) snake[0].x =cols-1;   // Wrap left edge -> right edge
     if(snake[0].y >= rows) snake[0].y =0;    // Wrap bottom edge -> top edge
-    if(snake[0].y < 0) snake[0].y =rows-1;  // Wrap top ledge -> bottom edge
+    if(snake[0].y < 0) snake[0].y =rows-1;   // Wrap top ledge -> bottom edge
     printf("Snake is at %d,%d\n",snake[0].x,snake[0].y);
+    if (snake[0] == fruit) {
+        // Add a new segment to the tail (copy last segment)
+        snake.push_back(snake.back());
+        spawnFruit();  // Respawn fruit
+    }
     
 }
 int main(){
     if(!glfwInit()){
         return -1;
     }
+    srand(static_cast<unsigned int>(time(0))); //Seed random number generator
 
     GLFWwindow* window = glfwCreateWindow(WIDTH,HEIGHT, "Snake Game",NULL, NULL);
     if(!window){
@@ -78,10 +102,11 @@ int main(){
     glewInit();                    // Initialize GLEW (to allow access to modern OpenGL functions)
 
     glOrtho(0, WIDTH, HEIGHT, 0, -1, 1);  // Set orthogonal 2D projection for OpenGL rendering
-    
+    spawnFruit();  // Place the first fruit
+    lastTime = glfwGetTime();
     while(!glfwWindowShouldClose(window)){
         glClear(GL_COLOR_BUFFER_BIT); // Clear Screen
-
+        
         // Input handling :
         if(glfwGetKey(window, GLFW_KEY_UP)==GLFW_PRESS && dirY!=1){ // UP KEY
             dirX = 0; dirY = -1; // Move Up (-y direction)
@@ -95,13 +120,21 @@ int main(){
         if(glfwGetKey(window, GLFW_KEY_RIGHT)==GLFW_PRESS && dirX!=-1){ // RIGHT KEY
             dirX = 1; dirY = 0; // Move Right (+x direction)
         }
-        update();
+        double currentTime = glfwGetTime();
+        if (currentTime - lastTime >= delay) {
+            update();
+            
+            lastTime = currentTime;
+        }
+        drawCell(fruit.x, fruit.y, 1.0f, 0.0f, 0.0f);
+
         for (auto& s : snake) { 
             drawCell(s.x, s.y, 0.0f, 1.0f, 0.0f);  // Draw each snake segment (green color)
         }
         drawWhite();
         glfwSwapBuffers(window);
         glfwPollEvents();
+        
     }
 
     glfwTerminate();
