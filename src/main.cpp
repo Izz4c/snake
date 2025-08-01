@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <iostream>
+#include "sound.h"
 const int WIDTH=1000;      // Window Width
 const int HEIGHT=1000;     // Window Height
 const int CELL_SIZE = 20; // Size of each grid cell
@@ -21,6 +22,7 @@ Vec2 fruit;
 int dirX = 1, dirY = 0; // Directions, initially moving to the right (+1 = right, -1 = left)
 double lastTime = 0.0;
 double delay = 0.08;
+bool alive=true;
 void drawCell(int x, int y,float r, float g, float b){
     glColor3f(r,g,b);                             // Set drawing color
     glBegin(GL_QUADS);                            // Start drawing
@@ -40,25 +42,43 @@ void drawWhite(){
 // Spawn the fruit at a random position that is not on the snake
 void spawnFruit() {
     while (true) {
-        fruit.x = rand() % cols;
-        fruit.y = rand() % rows;
+        fruit.x = rand() % cols;                // Keep fruit in the map
+        fruit.y = rand() % rows;                
 
-        bool onSnake = false;
+        bool onSnake = false;                   // To check if fruit spawned on the snake
         for (const auto& segment : snake) {
             if (segment == fruit) {
                 onSnake = true;
                 break;
             }
         }
-        if (!onSnake) break;
+        if (!onSnake) break;              // Keep changing fruit location till it isnt on the snake
     }
 }
+bool checkSelfCollision() {
+    const Vec2& head = snake[0];
+    for (size_t i = 1; i < snake.size(); ++i) {
+        
+        if (snake[i] == head)
+            
+            return true;
+    }
+    return false;
+}
 void update(){
+    if(!alive) return;
+    if (snake[0] == fruit) {
+        // Add a new segment to the tail (copy last segment)
+        snake.push_back(snake.back());
+        spawnFruit();  // Respawn fruit
+        playEatSound();
+    }
     // Move the snake's body cells (tail->head)
     for(int i = snake.size()-1;i>0;--i){
         snake[i] = snake[i-1]; //Each segment takes position of segment before
     }
     //Update the head cell based on direction
+    
     snake[0].x += dirX;
     snake[0].y += dirY;
     
@@ -67,14 +87,15 @@ void update(){
     if(snake[0].x < 0) snake[0].x =cols-1;   // Wrap left edge -> right edge
     if(snake[0].y >= rows) snake[0].y =0;    // Wrap bottom edge -> top edge
     if(snake[0].y < 0) snake[0].y =rows-1;   // Wrap top ledge -> bottom edge
-    printf("Snake is at %d,%d\n",snake[0].x,snake[0].y);
-    if (snake[0] == fruit) {
-        // Add a new segment to the tail (copy last segment)
-        snake.push_back(snake.back());
-        spawnFruit();  // Respawn fruit
+    
+    if (checkSelfCollision()) {
+        std::cout << "Game Over! You collided with yourself.\n";
+        alive = false;
+        playGameOverSound();
     }
     
 }
+
 int main(){
     if(!glfwInit()){
         return -1;
@@ -104,6 +125,7 @@ int main(){
     glOrtho(0, WIDTH, HEIGHT, 0, -1, 1);  // Set orthogonal 2D projection for OpenGL rendering
     spawnFruit();  // Place the first fruit
     lastTime = glfwGetTime();
+    initAudio();  // Initialize audio system
     while(!glfwWindowShouldClose(window)){
         glClear(GL_COLOR_BUFFER_BIT); // Clear Screen
         
@@ -126,17 +148,17 @@ int main(){
             
             lastTime = currentTime;
         }
-        drawCell(fruit.x, fruit.y, 1.0f, 0.0f, 0.0f);
+        drawCell(fruit.x, fruit.y, 1.0f, 1.0f, 0.0f);
 
-        for (auto& s : snake) { 
-            drawCell(s.x, s.y, 0.0f, 1.0f, 0.0f);  // Draw each snake segment (green color)
+        for(int i=0;i<snake.size();i++){
+            drawCell(snake[i].x, snake[i].y, alive?0.0f:((i%2==0)?0.8f:1.0f), alive?((i%2==0)?1.0f:0.8f):0.0f, 0.0f);  // Draw each snake segment (green color)
         }
         drawWhite();
         glfwSwapBuffers(window);
         glfwPollEvents();
         
     }
-
+    closeAudio();
     glfwTerminate();
     return 0;
 
