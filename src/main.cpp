@@ -28,10 +28,9 @@ void drawCell(int x, int y,float r, float g, float b){
     glBegin(GL_QUADS);                            // Start drawing
     glVertex2f(x*CELL_SIZE, y*CELL_SIZE);         // Bottom left corner
     glVertex2f((x+1)*CELL_SIZE, y*CELL_SIZE);     // Bottom right corner
-    glVertex2f((x+1)*CELL_SIZE, (y+1)*CELL_SIZE);     // Top left corner
-    glVertex2f(x*CELL_SIZE,(y+1)*CELL_SIZE);  // Top right corner
+    glVertex2f((x+1)*CELL_SIZE, (y+1)*CELL_SIZE); // Top left corner
+    glVertex2f(x*CELL_SIZE,(y+1)*CELL_SIZE);      // Top right corner
     glEnd();                                      // Finish drawing the box
-    //std::cout<<"Drawing at "<< x<< ","<<y << std::endl;
 }
 void drawWhite(){
     glColor3f(1.0f,1.0f,1.0f);
@@ -115,7 +114,6 @@ int main(){
     
     glViewport(0, 0, fbWidth, fbHeight); // correct rendering dimensions
     
-    // Optional: print sizes to debug
     printf("Window size: %d x %d\n", windowWidth, windowHeight);
     printf("Framebuffer size: %d x %d\n", fbWidth, fbHeight);
     printf("Rows : %d, Columns : %d\n", rows,cols);
@@ -151,7 +149,7 @@ int main(){
         drawCell(fruit.x, fruit.y, 1.0f, 1.0f, 0.0f);
 
         for(int i=0;i<snake.size();i++){
-            drawCell(snake[i].x, snake[i].y, alive?0.0f:((i%2==0)?0.8f:1.0f), alive?((i%2==0)?1.0f:0.8f):0.0f, 0.0f);  // Draw each snake segment (green color)
+            drawCell(snake[i].x, snake[i].y, alive?0.0f:((i%2==0)?0.8f:1.0f), alive?((i%2==0)?1.0f:0.8f):0.0f, 0.0f); //Draw the snake
         }
         drawWhite();
         glfwSwapBuffers(window);
