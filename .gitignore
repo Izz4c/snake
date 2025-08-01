@@ -17,3 +17,4 @@ snake
 # Build directories
 build/
 
+.vscode/
