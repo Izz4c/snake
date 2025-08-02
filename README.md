@@ -18,8 +18,7 @@ g++ -o snake_game src/main.cpp src/sound.cpp -lSDL2 -lGL -lGLEW -lGLFW
 ./snake
 ```
 
-![Game](assets/screenshots/snakegame.png)
-![Death](assets/screenshots/gameover.png)
+![Game](assets/media/game.gif)
 
 ## How to Play
 Use the arrow keys to control the snake and eat the fruit. Avoid hitting your own body!
